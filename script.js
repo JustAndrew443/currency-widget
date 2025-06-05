@@ -29,12 +29,15 @@ function updateTexts() {
     document.querySelector("label[for='currency']").textContent = currentLang === 'ru' ? 'Выберите валюту:' : 'Choose currency:';
     document.querySelector("label[for='range']").textContent = currentLang === 'ru' ? 'Диапазон:' : 'Range:';
     refreshBtn.textContent = currentLang === 'ru' ? '🔄 Обновить' : '🔄 Refresh';
+
     themeToggle.textContent = document.body.classList.contains("dark-mode")
         ? (currentLang === 'ru' ? "☀ Тема" : "☀ Theme")
         : (currentLang === 'ru' ? "🌙 Тема" : "🌙 Theme");
+
     currencySelect.options[0].text = currentLang === 'ru' ? 'USD (доллар)' : 'USD (dollar)';
     currencySelect.options[1].text = currentLang === 'ru' ? 'EUR (евро)' : 'EUR (euro)';
     currencySelect.options[2].text = currentLang === 'ru' ? 'CNY (юань)' : 'CNY (yuan)';
+
     rangeSelect.options[0].text = currentLang === 'ru' ? '7 дней' : '7 days';
     rangeSelect.options[1].text = currentLang === 'ru' ? '30 дней' : '30 days';
 }
@@ -44,6 +47,8 @@ async function fetchRates() {
     try {
         const response = await fetch(`https://api.exchangerate.host/latest?base=RUB&symbols=${selected}`);
         const data = await response.json();
+        if (!data || !data.rates || !data.rates[selected]) throw new Error("Нет курса");
+
         const rate = (1 / data.rates[selected]).toFixed(2);
         document.getElementById("rates").innerHTML = `<p>${selected}: ${rate} ₽</p>`;
         document.getElementById("update-time").textContent =
@@ -51,7 +56,8 @@ async function fetchRates() {
             new Date(data.date).toLocaleDateString();
     } catch (error) {
         document.getElementById("rates").innerHTML = "<p>Ошибка загрузки данных.</p>";
-        console.error("Ошибка загрузки курса:", error);
+        document.getElementById("update-time").textContent = "";
+        console.error("Ошибка:", error);
     }
 }
 
@@ -64,14 +70,20 @@ async function fetchChart() {
     for (let i = days - 1; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        const formatted = date.toISOString().split("T")[0];
+        const isoDate = date.toISOString().split("T")[0];
 
         try {
-            const response = await fetch(`https://api.exchangerate.host/${formatted}?base=RUB&symbols=${selected}`);
+            const response = await fetch(`https://api.exchangerate.host/${isoDate}?base=RUB&symbols=${selected}`);
             const data = await response.json();
-            const rate = data.rates[selected] ? (1 / data.rates[selected]).toFixed(2) : null;
-            labels.push(formatted.slice(5));
-            dataPoints.push(rate);
+
+            if (data.rates && data.rates[selected]) {
+                const rate = (1 / data.rates[selected]).toFixed(2);
+                labels.push(isoDate.slice(5)); // формат MM-DD
+                dataPoints.push(rate);
+            } else {
+                labels.push(isoDate.slice(5));
+                dataPoints.push(null);
+            }
         } catch (err) {
             labels.push("-");
             dataPoints.push(null);
@@ -94,7 +106,8 @@ async function fetchChart() {
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false } }
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: false } }
         }
     });
 }
@@ -106,4 +119,4 @@ function updateAll() {
 
 updateTexts();
 updateAll();
-setInterval(fetchRates, 60 * 60 * 1000);
+setInterval(fetchRates, 3600000); // обновление каждый час
