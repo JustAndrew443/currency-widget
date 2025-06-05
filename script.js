@@ -69,23 +69,35 @@ async function fetchChart() {
     const dataPoints = [];
 
     const today = new Date();
-    const promises = [];
-
-    for (let i = days - 1; i >= 0; i--) {
+    const fetchDay = async (offset) => {
         const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        const ymd = date.toISOString().split("T")[0].replace(/-/g, "/"); // формат YYYY/MM/DD
+        date.setDate(date.getDate() - offset);
+        if (date > new Date()) return { label: "", value: null }; // будущее — пропускаем
+
+        const ymd = date.toISOString().split("T")[0].replace(/-/g, "/"); // YYYY/MM/DD
         const label = date.toISOString().slice(5, 10);
 
-        labels.push(label);
-        promises.push(fetch(`https://www.cbr-xml-daily.ru/archive/${ymd}/daily_json.js`)
-            .then(r => r.ok ? r.json() : null)
-            .then(json => json && json.Valute[selected] ? json.Valute[selected].Value.toFixed(2) : null)
-            .catch(() => null)
-        );
-    }
+        try {
+            const res = await fetch(`https://www.cbr-xml-daily.ru/archive/${ymd}/daily_json.js`);
+            if (!res.ok) throw new Error("Недоступен");
 
-    const values = await Promise.all(promises);
+            const json = await res.json();
+            const value = json?.Valute?.[selected]?.Value;
+            return { label, value: value ? value.toFixed(2) : null };
+        } catch {
+            // Ошибки CORS, 404 и другие игнорируются
+            return { label, value: null };
+        }
+    };
+
+    const results = await Promise.all(
+        Array.from({ length: days }, (_, i) => fetchDay(days - 1 - i))
+    );
+
+    results.forEach(({ label, value }) => {
+        labels.push(label);
+        dataPoints.push(value);
+    });
 
     const ctx = document.getElementById("chart").getContext("2d");
     if (chart) chart.destroy();
@@ -95,7 +107,7 @@ async function fetchChart() {
             labels,
             datasets: [{
                 label: `${selected} / RUB`,
-                data: values,
+                data: dataPoints,
                 borderColor: '#0066cc',
                 fill: false,
                 spanGaps: true
