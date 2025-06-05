@@ -1,40 +1,33 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Валютный виджет</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="widget">
-        <canvas id="chart" width="300" height="100"></canvas>
         <h2 id="title">Курсы валют</h2>
-
         <label for="currency">Выберите валюту:</label>
         <select id="currency">
             <option value="USD">USD (доллар)</option>
             <option value="EUR">EUR (евро)</option>
             <option value="CNY">CNY (юань)</option>
         </select>
-
         <label for="range">Диапазон:</label>
         <select id="range">
             <option value="7">7 дней</option>
             <option value="30">30 дней</option>
         </select>
-
         <button id="lang-toggle">EN</button>
         <button id="refresh">🔄 Обновить</button>
         <button id="theme-toggle">🌙 Тема</button>
-
         <div id="rates"><p>Загрузка данных...</p></div>
         <canvas id="chart" width="300" height="100"></canvas>
         <p class="update-time" id="update-time"></p>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
