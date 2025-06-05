@@ -45,11 +45,11 @@ function updateTexts() {
 async function fetchRates() {
     const selected = currencySelect.value;
     try {
-        const response = await fetch(`https://api.exchangerate.host/latest?base=USD&symbols=RUB${selected}`);
+        const response = await fetch(`https://api.exchangerate.host/latest?base=${selected}&symbols=RUB`);
         const data = await response.json();
-        if (!data || !data.rates || !data.rates[selected]) throw new Error("Нет курса");
+        if (!data || !data.rates || !data.rates.RUB) throw new Error("Нет курса");
 
-        const rate = (1 / data.rates[selected]).toFixed(2);
+        const rate = data.rates.RUB.toFixed(2); // прямой курс
         document.getElementById("rates").innerHTML = `<p>${selected}: ${rate} ₽</p>`;
         document.getElementById("update-time").textContent =
             (currentLang === 'ru' ? 'Обновлено: ' : 'Updated: ') +
