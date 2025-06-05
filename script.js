@@ -45,7 +45,7 @@ function updateTexts() {
 async function fetchRates() {
     const selected = currencySelect.value;
     try {
-        const response = await fetch(`https://api.exchangerate.host/latest?base=RUB&symbols=${selected}`);
+        const response = await fetch(`https://api.exchangerate.host/latest?base=USD&symbols=RUB${selected}`);
         const data = await response.json();
         if (!data || !data.rates || !data.rates[selected]) throw new Error("Нет курса");
 
