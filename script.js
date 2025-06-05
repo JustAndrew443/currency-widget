@@ -45,19 +45,20 @@ function updateTexts() {
 async function fetchRates() {
     const selected = currencySelect.value;
     try {
-        const response = await fetch(`https://api.exchangerate.host/latest?base=${selected}&symbols=RUB`);
-        const data = await response.json();
-        if (!data || !data.rates || !data.rates.RUB) throw new Error("Нет курса");
+        const res = await fetch("https://www.cbr-xml-daily.ru/daily_json.js");
+        const data = await res.json();
 
-        const rate = data.rates.RUB.toFixed(2); // прямой курс
+        if (!data.Valute[selected]) throw new Error("Курс не найден");
+
+        const rate = data.Valute[selected].Value.toFixed(2);
         document.getElementById("rates").innerHTML = `<p>${selected}: ${rate} ₽</p>`;
         document.getElementById("update-time").textContent =
             (currentLang === 'ru' ? 'Обновлено: ' : 'Updated: ') +
-            new Date(data.date).toLocaleDateString();
-    } catch (error) {
+            new Date(data.Date).toLocaleDateString();
+    } catch (err) {
+        console.error("Ошибка:", err);
         document.getElementById("rates").innerHTML = "<p>Ошибка загрузки данных.</p>";
         document.getElementById("update-time").textContent = "";
-        console.error("Ошибка:", error);
     }
 }
 
@@ -67,28 +68,24 @@ async function fetchChart() {
     const labels = [];
     const dataPoints = [];
 
+    const today = new Date();
+    const promises = [];
+
     for (let i = days - 1; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const isoDate = date.toISOString().split("T")[0];
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        const ymd = date.toISOString().split("T")[0].replace(/-/g, "/"); // формат YYYY/MM/DD
+        const label = date.toISOString().slice(5, 10);
 
-        try {
-            const response = await fetch(`https://api.exchangerate.host/${isoDate}?base=RUB&symbols=${selected}`);
-            const data = await response.json();
-
-            if (data.rates && data.rates[selected]) {
-                const rate = (1 / data.rates[selected]).toFixed(2);
-                labels.push(isoDate.slice(5)); // формат MM-DD
-                dataPoints.push(rate);
-            } else {
-                labels.push(isoDate.slice(5));
-                dataPoints.push(null);
-            }
-        } catch (err) {
-            labels.push("-");
-            dataPoints.push(null);
-        }
+        labels.push(label);
+        promises.push(fetch(`https://www.cbr-xml-daily.ru/archive/${ymd}/daily_json.js`)
+            .then(r => r.ok ? r.json() : null)
+            .then(json => json && json.Valute[selected] ? json.Valute[selected].Value.toFixed(2) : null)
+            .catch(() => null)
+        );
     }
+
+    const values = await Promise.all(promises);
 
     const ctx = document.getElementById("chart").getContext("2d");
     if (chart) chart.destroy();
@@ -98,7 +95,7 @@ async function fetchChart() {
             labels,
             datasets: [{
                 label: `${selected} / RUB`,
-                data: dataPoints,
+                data: values,
                 borderColor: '#0066cc',
                 fill: false,
                 spanGaps: true
@@ -119,4 +116,4 @@ function updateAll() {
 
 updateTexts();
 updateAll();
-setInterval(fetchRates, 3600000); // обновление каждый час
+setInterval(fetchRates, 3600000);
