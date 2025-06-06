@@ -10,20 +10,32 @@
 <body>
     <div class="widget">
         <h2 id="title">Курсы валют</h2>
-        <label for="currency">Выберите валюту:</label>
-        <select id="currency">
-            <option value="USD">USD (доллар)</option>
-            <option value="EUR">EUR (евро)</option>
-            <option value="CNY">CNY (юань)</option>
-        </select>
-        <label for="range">Диапазон:</label>
-        <select id="range">
-            <option value="7">7 дней</option>
-            <option value="30">30 дней</option>
-        </select>
-        <button id="lang-toggle">EN</button>
-        <button id="refresh">🔄 Обновить</button>
-        <button id="theme-toggle">🌙 Тема</button>
+        <div class="controls">
+
+  <div class="row">
+    <label for="currency">Выберите валюту:</label>
+    <select id="currency">
+      <option value="USD">USD (доллар)</option>
+      <option value="EUR">EUR (евро)</option>
+      <option value="CNY">CNY (юань)</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <label for="range">Диапазон:</label>
+    <select id="range">
+      <option value="7">7 дней</option>
+      <option value="30">30 дней</option>
+    </select>
+    <button id="lang-toggle">EN</button>
+    <button id="refresh">🔄 Обновить</button>
+  </div>
+
+  <div class="row">
+    <button id="theme-toggle">🌙 Тема</button>
+  </div>
+
+</div>
         <div id="rates"><p>Загрузка данных...</p></div>
         <canvas id="chart" width="300" height="100"></canvas>
         <p class="update-time" id="update-time"></p>
