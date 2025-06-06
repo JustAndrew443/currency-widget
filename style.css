@@ -62,3 +62,7 @@ h2 {
     min-width: 90px;
     text-align: right;
 }
+select, button {
+    min-width: 110px;
+    text-align: center;
+}
